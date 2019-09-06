@@ -1,0 +1,10 @@
+a = [1 2; 3 4];
+b = [5 6; 7 8];
+c = cat(3, a, b)
+d = reshape(c, [2 4])
+c = [9 10; 11 12]
+d = [13 14;15 16];
+e = cat(3, a, b)
+f = cat(3, c, d)
+g = cat(4, e, f)
+h = reshape(g, [2 2 4])

@@ -1,0 +1,98 @@
+%-----------------------------------------------
+% visualize results obtained by experiments1.m
+%-----------------------------------------------
+
+%----
+load ../data.from.decoding/res.optimization.pvc3.1703070409.mat
+load ../data.from.decoding/res.subsampling.pvc3.1703070409.mat
+%----
+figure(3)
+subplot(1,2,1)
+% title('RMSE', 'FontName', 'Helvetica', 'FontSize', 18)
+boxplot([meanSum - meanOPRC])
+fontSize = 18;
+xlabel('sum - OPRC', 'FontName', 'Helvetica', 'FontSize', fontSize);
+ylabel('differences in RMSE', 'FontName', 'Helvetica', 'FontSize', fontSize);
+set(gca, 'XTickLabel', '', 'TickDir', 'out', 'FontName', 'Helvetica', 'FontSize', 18)
+subplot(1,2,2)
+% title('ratio ()', 'FontName', 'Helvetica', 'FontSize', 18)
+mean(improvements)
+boxplot(improvements)
+xlabel('(sum - OPRC) / sum', 'FontName', 'Helvetica', 'FontSize', fontSize);
+ylabel('improvements in ratio', 'FontName', 'Helvetica', 'FontSize', fontSize);
+set(gca, 'XTickLabel', '', 'TickDir', 'out', 'FontName', 'Helvetica', 'FontSize', 18)
+%----
+
+%----
+% visualizes how RMSE of the OPRC kernel changes when the number of neurons (units) are changed
+%----
+% PVC3 data (thinned), change unitNum and draw a line graph
+load ../data.from.decoding/res.optimization.pvc3.1703070409.mat
+allMultiSpikeTrains = spikeTrainsFromPVC3();
+nonEmptySubtrains = removeEmptySamples(allMultiSpikeTrains);
+[multiSpikeTrainsBySampleID, depVarID] = condIDbyTrialID2globalSampleID(nonEmptySubtrains);
+multiSpikeTrainsBySampleID4test = multiSpikeTrainsBySampleID(sampleID4test);
+depVarID4test = depVarID(sampleID4test);
+%----
+thinConditionsBy = 2;
+timeLength = 1000;
+offDiagH = allParamVecH(1);
+offDiagV = allParamVecV(1);
+ksizeH = allParamVecH(2);
+ksizeV = allParamVecV(2);
+regCoeffH = allParamVecH(3);
+regCoeffV = allParamVecV(3);
+samplePointNum = 10;
+subsampleTrialNum = 100;
+subsampleRatio = 1/2;
+foldNum = 0;
+period = 360;
+condNum = size(allMultiSpikeTrains,1);
+[pvc3_RMSEs, pvc3_unitNums] = changeUnitNumTestSamples(multiSpikeTrainsBySampleID4test, depVarID4test, timeLength, ksizeH, ksizeV, offDiagH, offDiagV, regCoeffH, regCoeffV, thinConditionsBy, foldNum, period, condNum, samplePointNum, subsampleTrialNum, subsampleRatio);
+save ../data.from.decoding/res.changeUnitNumTestSamples.pvc3.thinCondBy2.1703070409.mat pvc3_RMSEs pvc3_unitNums thinConditionsBy samplePointNum timeLength
+%----
+fontSize = 24;
+figure
+boxplot(pvc3_RMSEs');
+xlabel('number of neurons', 'FontName', 'Helvetica', 'FontSize', fontSize);
+ylabel('RMSE', 'FontName', 'Helvetica', 'FontSize', fontSize);
+ylim([0,110])
+xticks = pvc3_unitNums;
+labelPointNum = 4;
+labelSkipBy = ceil(length(xticks) / labelPointNum);
+set(gca, 'TickDir', 'out', 'XTickLabel', xticks(1:labelSkipBy:numel(xticks)), 'XTick', 1:labelSkipBy:numel(xticks), 'FontName', 'Helvetica', 'FontSize', fontSize)
+%----
+
+%----
+% Visualizes how RMSE of the OPRC kernel for different neurons (units)
+%----
+% change unit
+load ../data.from.decoding/res.optimization.pvc3.1703070409.mat
+load ../data.from.decoding/res.changeUnitNumTestSamples.pvc3.thinCondBy2.1703070409.mat
+allMultiSpikeTrains = spikeTrainsFromPVC3();
+nonEmptySubtrains = removeEmptySamples(allMultiSpikeTrains);
+[multiSpikeTrainsBySampleID, depVarID] = condIDbyTrialID2globalSampleID(nonEmptySubtrains);
+multiSpikeTrainsBySampleID4test = multiSpikeTrainsBySampleID(sampleID4test);
+depVarID4test = depVarID(sampleID4test);
+%----
+thinConditionsBy = 2;
+period = 360;
+condNum = size(allMultiSpikeTrains,1);
+timeLength = 1000;
+offDiagH = allParamVecH(1);
+offDiagV = allParamVecV(1);
+ksizeH = allParamVecH(2);
+ksizeV = allParamVecV(2);
+regCoeffH = allParamVecH(3);
+regCoeffV = allParamVecV(3);
+[RMSEs_pvc3_uni, unitIDs_pvc3] = univariateByDifferentUnitsTestSamples(multiSpikeTrainsBySampleID4test, depVarID4test, timeLength, ksizeH, ksizeV, offDiagH, offDiagV, regCoeffH, regCoeffV, thinConditionsBy, period, condNum)
+RMSEs_pvc3_all_units_vec = ones(length(unitIDs_pvc3),1) * mean(pvc3_RMSEs(end,:));
+save ../data.from.decoding/res.univariateByDifferentUnitsTestSamples.pvc3.1703070409.mat RMSEs_pvc3_uni RMSEs_pvc3_all_units_vec thinConditionsBy timeLength
+%----
+% load ../data.from.decoding/res.univariateByDifferentUnitsTestSamples.pvc3.1703070409.mat
+figure
+h = boxplot([RMSEs_pvc3_uni, RMSEs_pvc3_all_units_vec], 'Labels', {{' ',' '}; {'single','all'}});
+set(findobj(get(h(1), 'parent'), 'type', 'text'), 'FontName', 'Helvetica', 'FontSize', fontSize);
+xlabel('neurons', 'FontName', 'Helvetica', 'FontSize', fontSize);
+ylabel('RMSE', 'FontName', 'Helvetica', 'FontSize', fontSize);
+set(gca, 'TickDir', 'out', 'FontName', 'Helvetica', 'FontSize', fontSize)
